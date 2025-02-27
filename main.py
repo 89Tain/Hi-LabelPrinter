@@ -12,6 +12,22 @@ class LabelPrinterHandler(FileSystemEventHandler):
         super().__init__()
         self.config = PrinterConfiguration().read()
 
+    def get_receipt(self, file):
+        if "##########BEGIN FORM##########" in file:
+            receipt = file.split("##########BEGIN FORM##########")[0]
+            return receipt.strip()
+        else:
+            return "No delimiter found in file."
+
+
+    def get_report(self, file):
+        if "##########BEGIN FORM##########" in file:
+            report = file.split("##########BEGIN FORM##########")[1]
+            return report.strip()
+        else:
+            return "No delimiter found in file."
+
+
     def delete_file(self, file_path):
         if os.path.exists(file_path):
             try:
@@ -24,9 +40,14 @@ class LabelPrinterHandler(FileSystemEventHandler):
 
     def on_modified(self, event):
         if re.search(LABEL_PRINTER_FILE_EXTENSION_PATTERN, event.src_path):
-            command = 'lpr -o raw "' + event.src_path + '"'
-            print("✨️ Printing Label Printer File: " + command)
-            os.system(command)
+            reciept = self.get_receipt(open(event.src_path).read())
+            report = self.get_report(open(event.src_path).read())
+
+            receipt_command = f'lpr -P {self.config.get("printer_1")} -o raw {reciept}'
+            report_command = f'lpr -P {self.config.get("printer_2")} -o raw {report}'
+        
+            os.system(receipt_command)
+            os.system(report_command)
             if self.config.getboolean('DEFAULT', 'delete_files', fallback=False):
                 self.delete_file(event.src_path)
 
