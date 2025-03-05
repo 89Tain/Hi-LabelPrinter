@@ -4,8 +4,8 @@ import configparser
 DEFAULT_CONFIG = {
     'delete_file': True,
     'file_directory': "Downloads",
-    'printer_1': "/dev/ttyUSB0",
-    'printer_2': "/dev/labelPrinter"
+    'printer_1': "/dev/usb/lp1",
+    'printer_2': "/dev/usb/lp0"
 }
 
 class PrinterConfiguration:

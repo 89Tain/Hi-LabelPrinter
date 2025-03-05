@@ -38,18 +38,40 @@ class LabelPrinterHandler(FileSystemEventHandler):
         else:
             print(f"{file_path} does not exist.")
 
-    def on_modified(self, event):
-        if re.search(LABEL_PRINTER_FILE_EXTENSION_PATTERN, event.src_path):
-            reciept = self.get_receipt(open(event.src_path).read())
-            report = self.get_report(open(event.src_path).read())
+import subprocess
 
-            receipt_command = f'lpr -P {self.config.get("printer_1")} -o raw {reciept}'
-            report_command = f'lpr -P {self.config.get("printer_2")} -o raw {report}'
-        
-            os.system(receipt_command)
-            os.system(report_command)
-            if self.config.getboolean('DEFAULT', 'delete_files', fallback=False):
-                self.delete_file(event.src_path)
+def on_modified(self, event):
+    if re.search(LABEL_PRINTER_FILE_EXTENSION_PATTERN, event.src_path):
+        file_content = open(event.src_path).read()
+        receipt = self.get_receipt(file_content)
+        report = self.get_report(file_content)
+
+        try:
+            if receipt:
+                receipt_proc = subprocess.run(
+                    ["cat"],
+                    input=receipt,
+                    stdout=open(self.config.get('DEFAULT', 'printer_1'), 'w'),
+                    text=True,
+                    check=True
+                )
+                print(f"Receipt sent to {self.config.get('DEFAULT', 'printer_1')}")
+
+            if report:
+                report_proc = subprocess.run(
+                    ["cat"],
+                    input=report,
+                    stdout=open(self.config.get('DEFAULT', 'printer_2'), 'w'),
+                    text=True,
+                    check=True
+                )
+                print(f"Report sent to {self.config.get('DEFAULT', 'printer_2')}")
+                
+        except subprocess.CalledProcessError as e:
+            print(f"Error while printing: {e}")
+
+        if self.config.getboolean('DEFAULT', 'delete_file', fallback=False):
+            self.delete_file(event.src_path)
 
 if __name__ == '__main__':
     print("✨️ Starting Label Printer Tracker Service")
