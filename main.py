@@ -19,13 +19,6 @@ class LabelPrinterHandler(FileSystemEventHandler):
         else:
             return file
 
-
-    def get_report(self, file):
-        if "##########BEGIN FORM##########" in file:
-            report = file.split("##########BEGIN FORM##########")[1]
-            return report.strip()
-        else:
-            return "No delimiter found in file."
             
 
     def delete_file(self, file_path):
@@ -41,16 +34,13 @@ class LabelPrinterHandler(FileSystemEventHandler):
     def on_modified(self, event):
         if re.search(LABEL_PRINTER_FILE_EXTENSION_PATTERN, event.src_path):
             reciept = self.get_receipt(open(event.src_path).read())
-            report = self.get_report(open(event.src_path).read())
             receipt_command = f"echo '{reciept}' > {self.config.get('DEFAULT', 'printer_1')}"
-            report_command = f"echo '{report}' > {self.config.get('DEFAULT', 'printer_2')}"
 
 
 
             
         
             os.system(receipt_command)
-            os.system(report_command)
             if self.config.getboolean('DEFAULT', 'delete_files', fallback=False):
                 self.delete_file(event.src_path)
 
